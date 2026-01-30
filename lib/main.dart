@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'camera_screen.dart';
 
 void main() {
   runApp(const GoToGymApp());
@@ -27,9 +28,21 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Center(
         child: ElevatedButton(
-          onPressed: () {
-            // kommt später
-          },
+          onPressed: () async {
+  final imagePath = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const CameraScreen(),
+    ),
+  );
+
+  if (imagePath != null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Status: DA')),
+    );
+  }
+},
+
           child: const Text('CLICK HERE'),
         ),
       ),
