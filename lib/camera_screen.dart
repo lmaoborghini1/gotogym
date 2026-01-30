@@ -10,6 +10,8 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   late CameraController _controller;
+  List<CameraDescription> _cameras = [];
+  int _selectedCameraIndex = 0;
   bool _isReady = false;
 
   @override
@@ -19,18 +21,36 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _initCamera() async {
-    final cameras = await availableCameras();
-    final camera = cameras.first;
+    _cameras = await availableCameras();
 
     _controller = CameraController(
-      camera,
+      _cameras[_selectedCameraIndex],
       ResolutionPreset.medium,
     );
 
     await _controller.initialize();
+
     setState(() {
       _isReady = true;
     });
+  }
+
+  Future<void> _switchCamera() async {
+    if (_cameras.length < 2) return;
+
+    _selectedCameraIndex =
+        (_selectedCameraIndex + 1) % _cameras.length;
+
+    await _controller.dispose();
+
+    _controller = CameraController(
+      _cameras[_selectedCameraIndex],
+      ResolutionPreset.medium,
+    );
+
+    await _controller.initialize();
+
+    setState(() {});
   }
 
   @override
@@ -50,12 +70,24 @@ class _CameraScreenState extends State<CameraScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Beweisfoto')),
       body: CameraPreview(_controller),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final image = await _controller.takePicture();
-          Navigator.pop(context, image.path);
-        },
-        child: const Icon(Icons.camera),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'switch',
+            onPressed: _switchCamera,
+            child: const Icon(Icons.cameraswitch),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton(
+            heroTag: 'capture',
+            onPressed: () async {
+              final image = await _controller.takePicture();
+              Navigator.pop(context, image.path);
+            },
+            child: const Icon(Icons.camera),
+          ),
+        ],
       ),
     );
   }
