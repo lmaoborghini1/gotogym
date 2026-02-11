@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'group_screen.dart';
+import 'dashboard_screen.dart';
+
 
 void main() {
   runApp(const GoToGymApp());
@@ -13,7 +15,7 @@ class GoToGymApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'GoToGym',
-      home: HomeScreen(),
+      home: const DashboardScreen(),
     );
   }
 }

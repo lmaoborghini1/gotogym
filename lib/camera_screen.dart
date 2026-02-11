@@ -17,7 +17,9 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void initState() {
     super.initState();
-    _initCamera();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initCamera();
+    });
   }
 
   Future<void> _initCamera() async {
@@ -69,7 +71,11 @@ class _CameraScreenState extends State<CameraScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Beweisfoto')),
-      body: CameraPreview(_controller),
+      body: Stack(
+        children: [
+          CameraPreview(_controller),
+        ],
+      ),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
