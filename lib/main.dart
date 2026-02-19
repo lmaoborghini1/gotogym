@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'group_screen.dart';
 import 'dashboard_screen.dart';
-
 
 void main() {
   runApp(const GoToGymApp());
