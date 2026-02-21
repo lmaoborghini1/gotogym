@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const GoToGymApp());
 }
 
@@ -12,8 +13,7 @@ class GoToGymApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'GoToGym',
-      home: const DashboardScreen(),
+      home: DashboardScreen(),
     );
   }
 }

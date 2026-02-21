@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'camera_screen.dart';
 
+enum TrainingStatus {
+  completed,
+  dueToday,
+  upcoming,
+}
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -9,336 +15,271 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  int _currentIndex = 0;
+  bool _workedOutToday = false;
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> screens = [
+      _buildHome(),
+      const Center(
+        child: Text(
+          "Gruppe",
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      _buildProfile(),
+    ];
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+      backgroundColor: const Color(0xFF111114),
+      body: screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF1C1C22),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.grey,
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: "Home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.group_rounded),
+            label: "Gruppe",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: "Profile",
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ================= HOME =================
+
+  Widget _buildHome() {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Heute",
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 25),
+            _statusCard(),
+            const SizedBox(height: 25),
+            _proofCard(),
+            const SizedBox(height: 30),
+            const Text(
+              "Gym Gruppe",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 15),
+            _memberTile("Alex", TrainingStatus.completed),
+            _memberTile("Jana", TrainingStatus.dueToday),
+            _memberTile("Tom", TrainingStatus.upcoming),
+            _memberTile(
+              "Du",
+              _workedOutToday
+                  ? TrainingStatus.completed
+                  : TrainingStatus.dueToday,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statusCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Row(
+        children: [
+          Icon(
+            _workedOutToday
+                ? Icons.check_circle_rounded
+                : Icons.schedule_rounded,
+            color: _workedOutToday ? Colors.green : Colors.amber,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            _workedOutToday
+                ? "Workout erledigt"
+                : "Heute Training – noch kein Foto",
+            style: const TextStyle(color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _proofCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(),
+      child: SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF4A00E0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          onPressed: () async {
+            final imagePath = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CameraScreen(),
+              ),
+            );
+
+            if (imagePath != null) {
+              setState(() {
+                _workedOutToday = true;
+              });
+            }
+          },
+          child: const Text(
+            "Beweisfoto posten",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _memberTile(String name, TrainingStatus status) {
+    String description;
+    IconData icon;
+    Color color;
+
+    switch (status) {
+      case TrainingStatus.completed:
+        description = "Hat heute trainiert";
+        icon = Icons.check_circle_rounded;
+        color = Colors.green;
+        break;
+      case TrainingStatus.dueToday:
+        description = "Heute Training – noch kein Foto";
+        icon = Icons.schedule_rounded;
+        color = Colors.amber;
+        break;
+      case TrainingStatus.upcoming:
+        description = "Nächstes Training in 2 Tagen";
+        icon = Icons.calendar_today_rounded;
+        color = Colors.grey;
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 22,
+            backgroundImage: AssetImage("assets/profile.jpg"),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                const SizedBox(height: 20),
-
-                /// HEADER
-                const Text(
-                  "Welcome back",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                const Text(
-                  "Today is your workout day",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                /// STATUS CARD
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: _cardDecoration(),
-                  child: Row(
-                    children: const [
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundColor: Colors.red,
-                        child: Icon(Icons.close, color: Colors.white),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          "No workout yet today",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                /// CAMERA BUTTON
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white, // Text + Icon Farbe
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
-                    onPressed: () async {
-                      final imagePath = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CameraScreen(),
-                        ),
-                      );
-
-                      if (imagePath != null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Workout confirmed"),
-                          ),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text(
-                      "Post proof photo",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 35),
-
-                /// GROUP TITLE
-                const Text(
-                  "Challenge Group",
-                  style: TextStyle(
-                    fontSize: 18,
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-
-                const SizedBox(height: 15),
-
-                /// MEMBERS
-                const _MemberTile(name: "Alex", isHere: true),
-                const _MemberTile(name: "Sam", isHere: false),
-                const _MemberTile(name: "Chris", isHere: true),
-                const _MemberTile(name: "You", isHere: false),
-
-                const SizedBox(height: 30),
-
-                /// COMMENT BUTTON
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      _openComments(context);
-                    },
-                    child: const Text("Open Comments"),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 13,
                   ),
                 ),
-
-                const SizedBox(height: 40),
               ],
             ),
           ),
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-    currentIndex: 0,
-    selectedItemColor: Colors.deepPurple,
-    unselectedItemColor: Colors.grey,
-    items: const [
-      BottomNavigationBarItem(
-        icon: Icon(Icons.home),
-        label: "Home",
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.group),
-        label: "Group",
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.person),
-        label: "Profile",
-      )
-    ]
-      )
-    );
-  }
-
-  /// Bottom Sheet Kommentare
-  void _openComments(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          builder: (_, controller) {
-            return Container(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                children: [
-
-                  /// Drag Handle
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-
-                  const Text(
-                    "Comments",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  /// COMMENT LIST
-                  Expanded(
-                    child: ListView(
-                      controller: controller,
-                      children: const [
-                        ListTile(
-                          title: Text("Alex"),
-                          subtitle: Text("Leg day done 💪"),
-                        ),
-                        ListTile(
-                          title: Text("Sam"),
-                          subtitle: Text("Hard session today"),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  /// INPUT FIELD
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: "Write a comment...",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.send),
-                      )
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  static BoxDecoration _cardDecoration() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.06),
-          blurRadius: 20,
-          offset: const Offset(0, 10),
-        ),
-      ],
-    );
-  }
-}
-
-class _MemberTile extends StatelessWidget {
-  final String name;
-  final bool isHere;
-
-  const _MemberTile({
-    required this.name,
-    required this.isHere,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-
-          CircleAvatar(
-            radius: 24,
-            backgroundColor:
-                isHere ? Colors.green : Colors.grey.shade400,
-            child: Text(
-              name[0],
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 14),
-
-          Expanded(
-            child: Text(
-              name,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-
           Icon(
-            isHere
-                ? Icons.check_circle
-                : Icons.remove_circle_outline,
-            color:
-                isHere ? Colors.green : Colors.grey,
+            icon,
+            color: color,
           ),
         ],
       ),
+    );
+  }
+
+  // ================= PROFILE =================
+
+  Widget _buildProfile() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              "Profil",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 30),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 35,
+                  backgroundImage: AssetImage("assets/profile.jpg"),
+                ),
+                SizedBox(width: 20),
+                Text(
+                  "Dein Name",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: const Color(0xFF1C1C22),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: const Color(0xFF2A2A32)),
     );
   }
 }

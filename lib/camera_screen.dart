@@ -10,48 +10,42 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   late CameraController _controller;
-  List<CameraDescription> _cameras = [];
+  late Future<void> _initializeControllerFuture;
+  List<CameraDescription>? _cameras;
   int _selectedCameraIndex = 0;
-  bool _isReady = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initCamera();
-    });
+    _initCamera();
   }
 
   Future<void> _initCamera() async {
     _cameras = await availableCameras();
 
     _controller = CameraController(
-      _cameras[_selectedCameraIndex],
+      _cameras![_selectedCameraIndex],
       ResolutionPreset.medium,
     );
 
-    await _controller.initialize();
-
-    setState(() {
-      _isReady = true;
-    });
+    _initializeControllerFuture = _controller.initialize();
+    setState(() {});
   }
 
   Future<void> _switchCamera() async {
-    if (_cameras.length < 2) return;
+    if (_cameras == null || _cameras!.length < 2) return;
 
     _selectedCameraIndex =
-        (_selectedCameraIndex + 1) % _cameras.length;
+        (_selectedCameraIndex + 1) % _cameras!.length;
 
     await _controller.dispose();
 
     _controller = CameraController(
-      _cameras[_selectedCameraIndex],
+      _cameras![_selectedCameraIndex],
       ResolutionPreset.medium,
     );
 
-    await _controller.initialize();
-
+    _initializeControllerFuture = _controller.initialize();
     setState(() {});
   }
 
@@ -63,37 +57,63 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isReady) {
+    if (_cameras == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Beweisfoto')),
-      body: Stack(
-        children: [
-          CameraPreview(_controller),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: 'switch',
-            onPressed: _switchCamera,
-            child: const Icon(Icons.cameraswitch),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton(
-            heroTag: 'capture',
-            onPressed: () async {
-              final image = await _controller.takePicture();
-              Navigator.pop(context, image.path);
-            },
-            child: const Icon(Icons.camera),
-          ),
-        ],
+      backgroundColor: Colors.black,
+      body: FutureBuilder(
+        future: _initializeControllerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState ==
+              ConnectionState.done) {
+            return Stack(
+              children: [
+                CameraPreview(_controller),
+                Positioned(
+                  bottom: 40,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        onPressed: _switchCamera,
+                        icon: const Icon(
+                          Icons.cameraswitch,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      FloatingActionButton(
+                        backgroundColor: Colors.white,
+                        onPressed: () async {
+                          await _initializeControllerFuture;
+                          final image =
+                              await _controller.takePicture();
+                          Navigator.pop(
+                              context, image.path);
+                        },
+                        child: const Icon(
+                          Icons.camera,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        },
       ),
     );
   }
