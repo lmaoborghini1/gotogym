@@ -40,6 +40,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentStreak = 0;
   int _bestStreak = 0;
 
+  bool _isWorkoutDay(DateTime date) {
+    return _workoutDays.contains(date.weekday);
+  }
+
   final List<String> _comments = [];
   final TextEditingController _commentController = TextEditingController();
 
@@ -71,6 +75,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (savedDays != null) {
       _workoutDays = savedDays.map((e) => int.parse(e)).toList();
     }
+
+    Future<void> _checkMissedWorkoutDays() async {
+      if (_lastWorkoutDate == null) return;
+
+      final now = DateTime.now();
+      final prefs = await SharedPreferences.getInstance();
+
+      DateTime checkDate = _lastWorkoutDate!.add(const Duration(days: 1));
+
+      bool missedWorkout = false;
+
+      while (checkDate.isBefore(now)) {
+        if (_isWorkoutDay(checkDate)) {
+          missedWorkout = true;
+          break;
+        }
+        checkDate = checkDate.add(const Duration(days: 1));
+      }
+
+      if (missedWorkout) {
+        _currentStreak = 0;
+        await prefs.setInt('currentStreak', 0);
+      }
+    }
+
+    await _checkMissedWorkoutDays();
 
     setState(() {});
   }
@@ -176,6 +206,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
+<<<<<<< HEAD
+=======
+            const SizedBox(height: 4),
+            Text(
+              "Best: $_bestStreak Tage",
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+              ),
+            ),
+>>>>>>> 4bdadaf6bd3be823db68631aeac0e9fac72af3bd
             const SizedBox(height: 25),
             _statusCard(),
             const SizedBox(height: 25),
@@ -190,6 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 15),
+<<<<<<< HEAD
             ...members.map((member) {
               return _memberTile(
                 member.name,
@@ -199,6 +241,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         : TrainingStatus.dueToday)
                     : TrainingStatus.completed,
                 member.streak,
+=======
+            ...members.asMap().entries.map((entry) {
+              int index = entry.key;
+              Member member = entry.value;
+
+              TrainingStatus status;
+
+              if (member.name == "Du") {
+                status = _workedOutToday
+                    ? TrainingStatus.completed
+                    : TrainingStatus.dueToday;
+              } else {
+                status = TrainingStatus.completed;
+              }
+
+              return _memberTile(
+                member.name,
+                status,
+                member.streak,
+                index + 1,
+>>>>>>> 4bdadaf6bd3be823db68631aeac0e9fac72af3bd
               );
             }).toList(),
             const SizedBox(height: 30),
@@ -252,6 +315,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF4A00E0),
           ),
+<<<<<<< HEAD
           onPressed: () async {
             final imagePath = await Navigator.push(
               context,
@@ -266,12 +330,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               if (_lastWorkoutDate != null) {
                 final difference = now.difference(_lastWorkoutDate!).inDays;
+=======
+          onPressed: _isWorkoutDay(DateTime.now())
+              ? () async {
+                  final imagePath = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CameraScreen(),
+                    ),
+                  );
 
-                if (difference == 1) {
-                  _currentStreak++;
-                } else if (difference > 1) {
-                  _currentStreak = 1;
+                  if (imagePath != null) {
+                    final now = DateTime.now();
+                    final prefs = await SharedPreferences.getInstance();
+
+                    if (_lastWorkoutDate != null) {
+                      DateTime checkDate =
+                          _lastWorkoutDate!.add(const Duration(days: 1));
+>>>>>>> 4bdadaf6bd3be823db68631aeac0e9fac72af3bd
+
+                      bool missedWorkout = false;
+
+                      while (checkDate.isBefore(now)) {
+                        if (_isWorkoutDay(checkDate)) {
+                          missedWorkout = true;
+                          break;
+                        }
+                        checkDate = checkDate.add(const Duration(days: 1));
+                      }
+
+                      if (missedWorkout) {
+                        _currentStreak = 1;
+                      } else {
+                        _currentStreak++;
+                      }
+                    } else {
+                      _currentStreak = 1;
+                    }
+
+                    if (_currentStreak > _bestStreak) {
+                      _bestStreak = _currentStreak;
+                    }
+
+                    await prefs.setInt('currentStreak', _currentStreak);
+                    await prefs.setInt('bestStreak', _bestStreak);
+                    await prefs.setString(
+                        'lastWorkoutDate', now.toIso8601String());
+                    await prefs.setBool('workedOutToday', true);
+
+                    setState(() {
+                      _workedOutToday = true;
+                      _lastWorkoutDate = now;
+                    });
+                  }
                 }
+<<<<<<< HEAD
               } else {
                 _currentStreak = 1;
               }
@@ -295,13 +408,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: const Text(
             "Beweisfoto posten",
             style: TextStyle(color: Colors.white),
+=======
+              : null,
+          child: Text(
+            _isWorkoutDay(DateTime.now())
+                ? "Beweisfoto posten"
+                : "Heute kein Workout-Tag",
+            style: const TextStyle(color: Colors.white),
+>>>>>>> 4bdadaf6bd3be823db68631aeac0e9fac72af3bd
           ),
         ),
       ),
     );
   }
 
+<<<<<<< HEAD
   Widget _memberTile(String name, TrainingStatus status, int streak) {
+=======
+  Widget _memberTile(String name, TrainingStatus status, int streak, int rank) {
+>>>>>>> 4bdadaf6bd3be823db68631aeac0e9fac72af3bd
     String description;
     IconData icon;
     Color color;
@@ -327,9 +452,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
+      decoration: name == "Du"
+          ? _cardDecoration().copyWith(
+              border: Border.all(
+                color: Colors.orange,
+                width: 1.5,
+              ),
+            )
+          : _cardDecoration(),
       child: Row(
         children: [
+          Text(
+            "#$rank",
+            style: const TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(width: 10),
           CircleAvatar(
             radius: 22,
             backgroundImage: _profileImagePath != null
@@ -360,6 +500,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           Row(
+<<<<<<< HEAD
             children: [
               Icon(icon, color: color),
               const SizedBox(width: 6),
@@ -367,15 +508,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Icons.local_fire_department,
                 color: Colors.orange,
                 size: 16,
+=======
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.local_fire_department,
+                color: Colors.orange,
+                size: 18,
+>>>>>>> 4bdadaf6bd3be823db68631aeac0e9fac72af3bd
               ),
               const SizedBox(width: 4),
               Text(
                 "$streak",
                 style: const TextStyle(
                   color: Colors.white,
+<<<<<<< HEAD
                   fontSize: 13,
                 ),
               ),
+=======
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(icon, color: color),
+>>>>>>> 4bdadaf6bd3be823db68631aeac0e9fac72af3bd
             ],
           ),
         ],
