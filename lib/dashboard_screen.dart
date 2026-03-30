@@ -190,15 +190,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 15),
-            ...members.map((member) {
+            ...members.asMap().entries.map((entry) {
+              int index = entry.key;
+              Member member = entry.value;
+
+              TrainingStatus status;
+
+              if (member.name == "Du") {
+                status = _workedOutToday
+                    ? TrainingStatus.completed
+                    : TrainingStatus.dueToday;
+              } else if (member.name == "Tom") {
+                status = TrainingStatus.upcoming;
+              } else if (member.name == "Jana") {
+                status = TrainingStatus.dueToday;
+              } else {
+                status = TrainingStatus.completed;
+              }
+
               return _memberTile(
                 member.name,
-                member.name == "Du"
-                    ? (_workedOutToday
-                        ? TrainingStatus.completed
-                        : TrainingStatus.dueToday)
-                    : TrainingStatus.completed,
+                status,
                 member.streak,
+                index + 1,
               );
             }).toList(),
             const SizedBox(height: 30),
@@ -290,6 +304,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _lastWorkoutImagePath = imagePath;
                 _lastWorkoutDate = now;
               });
+              ScaffoldMessenger.of(context).showSnackBar(
+  const SnackBar(
+    content: Text("🔥 +1 Tag!"),
+    duration: Duration(seconds: 2),
+  ),
+);
             }
           },
           child: const Text(
@@ -301,7 +321,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _memberTile(String name, TrainingStatus status, int streak) {
+  Widget _memberTile(
+    String name,
+    TrainingStatus status,
+    int streak,
+    int rank,
+  ) {
     String description;
     IconData icon;
     Color color;
@@ -312,13 +337,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         icon = Icons.check_circle_rounded;
         color = Colors.green;
         break;
+
       case TrainingStatus.dueToday:
         description = "Heute Training – noch kein Foto";
         icon = Icons.schedule_rounded;
         color = Colors.amber;
         break;
+
       case TrainingStatus.upcoming:
-        description = "Nächstes Training in 2 Tagen";
+        description = "Nächstes Training geplant";
         icon = Icons.calendar_today_rounded;
         color = Colors.grey;
         break;
@@ -330,13 +357,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: _cardDecoration(),
       child: Row(
         children: [
+          Text(
+            "#$rank",
+            style: const TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(width: 10),
+
           CircleAvatar(
             radius: 22,
             backgroundImage: _profileImagePath != null
                 ? FileImage(File(_profileImagePath!))
                 : const AssetImage("assets/profile.jpg") as ImageProvider,
           ),
+
           const SizedBox(width: 12),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,10 +397,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+
+          // 🔥 Status Icon + Streak
           Row(
             children: [
               Icon(icon, color: color),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               const Icon(
                 Icons.local_fire_department,
                 color: Colors.orange,
