@@ -30,6 +30,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
   bool _workedOutToday = false;
+  bool _streakLost = false;
 
   String? _lastWorkoutImagePath;
   DateTime? _lastWorkoutDate;
@@ -48,6 +49,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _loadAll();
   }
+
+Future<void> _checkMissedWorkoutDays() async {
+  if (_lastWorkoutDate == null) return;
+
+  final now = DateTime.now();
+  final prefs = await SharedPreferences.getInstance();
+
+  final difference = now.difference(_lastWorkoutDate!).inDays;
+
+  if (difference > 1) {
+    _currentStreak = 0;
+    _streakLost = true;
+
+    await prefs.setInt('currentStreak', 0);
+  }
+}
 
   Future<void> _loadAll() async {
     final prefs = await SharedPreferences.getInstance();
@@ -71,6 +88,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (savedDays != null) {
       _workoutDays = savedDays.map((e) => int.parse(e)).toList();
     }
+
+await _checkMissedWorkoutDays();
 
     setState(() {});
   }
@@ -559,12 +578,87 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    "Noch keine Kommentare",
-                    style: TextStyle(color: Colors.grey),
-                  ),
+              Expanded(
+  child: _comments.isEmpty
+      ? const Center(
+          child: Text(
+            "Noch keine Kommentare",
+            style: TextStyle(color: Colors.grey),
+          ),
+        )
+      : ListView.builder(
+          itemCount: _comments.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 8,
+              ),
+              child: Text(
+                _comments[index],
+                style: const TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            );
+          },
+        ),
+),
+
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _commentController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: "Kommentar eingeben",
+                          hintStyle:
+                              const TextStyle(color: Colors.grey),
+                          filled: true,
+                          fillColor:
+                              const Color(0xFF111114),
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding:
+                              const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 0,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color(0xFF4A00E0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: () {
+                        final text =
+                            _commentController.text.trim();
+                        if (text.isNotEmpty) {
+                          setState(() {
+                            _comments.add(text);
+                            _commentController.clear();
+                          });
+                        }
+                      },
+                      child: const Text("Senden"),
+                    ),
+                  ],
                 ),
               ),
             ],
