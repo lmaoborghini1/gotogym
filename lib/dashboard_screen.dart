@@ -12,10 +12,12 @@ enum TrainingStatus {
 
 class Member {
   final String name;
+  final String image;
   final int streak;
 
   Member({
     required this.name,
+    required this.image,
     required this.streak,
   });
 }
@@ -120,9 +122,7 @@ await _checkMissedWorkoutDays();
   Widget build(BuildContext context) {
     final screens = [
       _buildHome(),
-      const Center(
-        child: Text("Gruppe", style: TextStyle(color: Colors.white)),
-      ),
+      _buildGroup(),
       _buildProfile(),
     ];
 
@@ -153,12 +153,153 @@ await _checkMissedWorkoutDays();
 
   // ================= HOME =================
 
+Widget _buildGroup() {
+  List<Member> members = [
+    Member(name: "Markus", streak: 7, image: "assets/markus.jpg"),
+    Member(name: "Togi", streak: 3, image: "assets/togi.jpg"),
+    Member(name: "Nasser", streak: 1, image: "assets/nasser.jpg"),
+    Member(name: "Du", streak: _currentStreak, image: "assets/profile.jpg"),
+  ];
+
+  members.sort((a, b) => b.streak.compareTo(a.streak));
+
+  return SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          const Text(
+            "Gruppe",
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          const Text(
+            "Ranking",
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          ...members.asMap().entries.map((entry) {
+            int index = entry.key;
+            Member member = entry.value;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: _cardDecoration(),
+              child: Row(
+                children: [
+
+                  Text(
+                    "#${index + 1}",
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(width: 15),
+
+                  Expanded(
+                    child: Text(
+                      member.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                  const Icon(
+                    Icons.local_fire_department,
+                    color: Colors.orange,
+                    size: 18,
+                  ),
+
+                  const SizedBox(width: 4),
+
+                  Text(
+                    "${member.streak}",
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+
+          const SizedBox(height: 30),
+
+          const Text(
+            "Heute noch offen",
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: _cardDecoration(),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                Text(
+                  "❌ Jana",
+                  style: TextStyle(color: Colors.white),
+                ),
+
+                SizedBox(height: 8),
+
+                Text(
+                  "❌ Du",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+
+          const Spacer(),
+
+          const Center(
+            child: Text(
+              "Heute letzter Platz vermeiden.",
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
   Widget _buildHome() {
     List<Member> members = [
-      Member(name: "Alex", streak: 7),
-      Member(name: "Jana", streak: 3),
-      Member(name: "Tom", streak: 1),
-      Member(name: "Du", streak: _currentStreak),
+      Member(name: "Markus", streak: 7, image: "assets/markus.jpg"),
+    Member(name: "Togi", streak: 3, image: "assets/togi.jpg"),
+    Member(name: "Nasser", streak: 1, image: "assets/nasser.jpg"),
+    Member(name: "Du", streak: _currentStreak, image: "assets/profile.jpg"),
     ];
 
     members.sort((a, b) => b.streak.compareTo(a.streak));
@@ -216,22 +357,23 @@ await _checkMissedWorkoutDays();
               TrainingStatus status;
 
               if (member.name == "Du") {
-                status = _workedOutToday
-                    ? TrainingStatus.completed
-                    : TrainingStatus.dueToday;
-              } else if (member.name == "Tom") {
-                status = TrainingStatus.upcoming;
-              } else if (member.name == "Jana") {
-                status = TrainingStatus.dueToday;
-              } else {
-                status = TrainingStatus.completed;
-              }
+  status = _workedOutToday
+      ? TrainingStatus.completed
+      : TrainingStatus.dueToday;
+} else if (member.name == "Nasser") {
+  status = TrainingStatus.upcoming;
+} else if (member.name == "Togi") {
+  status = TrainingStatus.dueToday;
+} else {
+  status = TrainingStatus.completed;
+}
 
               return _memberTile(
                 member.name,
                 status,
                 member.streak,
                 index + 1,
+                member.image,
               );
             }).toList(),
             const SizedBox(height: 30),
@@ -345,6 +487,7 @@ await _checkMissedWorkoutDays();
     TrainingStatus status,
     int streak,
     int rank,
+    String image,
   ) {
     String description;
     IconData icon;
@@ -387,9 +530,12 @@ await _checkMissedWorkoutDays();
 
           CircleAvatar(
             radius: 22,
-            backgroundImage: _profileImagePath != null
-                ? FileImage(File(_profileImagePath!))
-                : const AssetImage("assets/profile.jpg") as ImageProvider,
+            backgroundImage: name == "Du"
+    ? (_profileImagePath != null
+        ? FileImage(File(_profileImagePath!))
+        : const AssetImage("assets/profile.jpg")
+            as ImageProvider)
+    : AssetImage(image),
           ),
 
           const SizedBox(width: 12),
