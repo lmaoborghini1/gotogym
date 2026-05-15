@@ -258,23 +258,24 @@ Widget _buildGroup() {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: _cardDecoration(),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            child: Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
 
-                Text(
-                  "❌ Jana",
-                  style: TextStyle(color: Colors.white),
-                ),
+    if (!_workedOutToday)
+      const Text(
+        "❌ Du",
+        style: TextStyle(color: Colors.white),
+      ),
 
-                SizedBox(height: 8),
+    const SizedBox(height: 8),
 
-                Text(
-                  "❌ Du",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
+    const Text(
+      "❌ Togi",
+      style: TextStyle(color: Colors.white),
+    ),
+  ],
+),
           ),
 
           const Spacer(),
@@ -296,10 +297,10 @@ Widget _buildGroup() {
 
   Widget _buildHome() {
     List<Member> members = [
-      Member(name: "Markus", streak: 7, image: "assets/markus.jpg"),
-    Member(name: "Togi", streak: 3, image: "assets/togi.jpg"),
-    Member(name: "Nasser", streak: 1, image: "assets/nasser.jpg"),
-    Member(name: "Du", streak: _currentStreak, image: "assets/profile.jpg"),
+      Member(name: "Markus", streak: 7, image: "assets/members/markus.jpg"),
+    Member(name: "Togi", streak: 3, image: "assets/members/togi.jpg"),
+    Member(name: "Nasser", streak: 1, image: "assets/members/nasser.jpg"),
+    Member(name: "Du", streak: _currentStreak, image: "assets/members/profile.jpg"),
     ];
 
     members.sort((a, b) => b.streak.compareTo(a.streak));
