@@ -158,7 +158,7 @@ Widget _buildGroup() {
     Member(name: "Markus", streak: 7, image: "assets/markus.jpg"),
     Member(name: "Togi", streak: 3, image: "assets/togi.jpg"),
     Member(name: "Nasser", streak: 1, image: "assets/nasser.jpg"),
-    Member(name: "Du", streak: _currentStreak, image: "assets/profile.jpg"),
+    Member(name: "You", streak: _currentStreak, image: "assets/profile.jpg"),
   ];
 
   members.sort((a, b) => b.streak.compareTo(a.streak));
@@ -171,7 +171,7 @@ Widget _buildGroup() {
         children: [
 
           const Text(
-            "Gruppe",
+            "Group",
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -245,7 +245,7 @@ Widget _buildGroup() {
           const SizedBox(height: 30),
 
           const Text(
-            "Heute noch offen",
+            "Still no proof",
             style: TextStyle(
               color: Colors.grey,
               fontSize: 14,
@@ -264,7 +264,7 @@ Widget _buildGroup() {
 
     if (!_workedOutToday)
       const Text(
-        "❌ Du",
+        "❌ You",
         style: TextStyle(color: Colors.white),
       ),
 
@@ -282,7 +282,7 @@ Widget _buildGroup() {
 
           const Center(
             child: Text(
-              "Heute letzter Platz vermeiden.",
+              "Don't finish last today.",
               style: TextStyle(
                 color: Colors.grey,
                 fontSize: 13,
@@ -300,7 +300,7 @@ Widget _buildGroup() {
       Member(name: "Markus", streak: 7, image: "assets/members/markus.jpg"),
     Member(name: "Togi", streak: 3, image: "assets/members/togi.jpg"),
     Member(name: "Nasser", streak: 1, image: "assets/members/nasser.jpg"),
-    Member(name: "Du", streak: _currentStreak, image: "assets/members/profile.jpg"),
+    Member(name: "You", streak: _currentStreak, image: "assets/members/profile.jpg"),
     ];
 
     members.sort((a, b) => b.streak.compareTo(a.streak));
@@ -312,7 +312,7 @@ Widget _buildGroup() {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Heute",
+              "Today",
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
@@ -328,7 +328,7 @@ Widget _buildGroup() {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  "$_currentStreak Tage in Folge",
+                  "$_currentStreak day streak",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -343,7 +343,7 @@ Widget _buildGroup() {
             _proofCard(),
             const SizedBox(height: 30),
             const Text(
-              "Gym Gruppe",
+              "Gym Group",
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -382,7 +382,7 @@ Widget _buildGroup() {
               child: TextButton(
                 onPressed: () => _openComments(context),
                 child: const Text(
-                  "Kommentare öffnen",
+                  "Open comments",
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -408,8 +408,8 @@ Widget _buildGroup() {
           const SizedBox(width: 12),
           Text(
             _workedOutToday
-                ? "Workout erledigt"
-                : "Heute Training – noch kein Foto",
+                ? "Workout completed"
+                : "Workout due today –",
             style: const TextStyle(color: Colors.white),
           ),
         ],
@@ -468,14 +468,14 @@ Widget _buildGroup() {
               });
               ScaffoldMessenger.of(context).showSnackBar(
   const SnackBar(
-    content: Text("🔥 +1 Tag!"),
+    content: Text("🔥 +1 Day"),
     duration: Duration(seconds: 2),
   ),
 );
             }
           },
           child: const Text(
-            "Beweisfoto posten",
+            "Post proof",
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -496,19 +496,19 @@ Widget _buildGroup() {
 
     switch (status) {
       case TrainingStatus.completed:
-        description = "Hat heute trainiert";
+        description = "Worked out today";
         icon = Icons.check_circle_rounded;
         color = Colors.green;
         break;
 
       case TrainingStatus.dueToday:
-        description = "Heute Training – noch kein Foto";
+        description = "Workout due today –";
         icon = Icons.schedule_rounded;
         color = Colors.amber;
         break;
 
       case TrainingStatus.upcoming:
-        description = "Nächstes Training geplant";
+        description = "Next workout on Friday";
         icon = Icons.calendar_today_rounded;
         color = Colors.grey;
         break;
@@ -621,7 +621,7 @@ Widget _buildGroup() {
                   ),
                   const SizedBox(width: 20),
                   const Text(
-                    "Dein Name",
+                    "Your name",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -633,10 +633,10 @@ Widget _buildGroup() {
             ),
             const SizedBox(height: 30),
             _sectionTitle("Account"),
-            _profileTile(Icons.image_outlined, "Profilbild ändern",
+            _profileTile(Icons.image_outlined, "Change profile picture",
                 onTap: _pickProfileImage),
             const SizedBox(height: 30),
-            _sectionTitle("Training"),
+            _sectionTitle("Workout"),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -646,7 +646,7 @@ Widget _buildGroup() {
 
                 return FilterChip(
                   label:
-                      Text(["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"][index]),
+                      Text(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]),
                   selected: isSelected,
                   onSelected: (selected) {
                     setState(() {
@@ -718,7 +718,7 @@ Widget _buildGroup() {
             children: [
               const SizedBox(height: 20),
               const Text(
-                "Kommentare",
+                "Comments",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -729,7 +729,7 @@ Widget _buildGroup() {
   child: _comments.isEmpty
       ? const Center(
           child: Text(
-            "Noch keine Kommentare",
+            "No comments so far. Be the first to comment!",
             style: TextStyle(color: Colors.grey),
           ),
         )
@@ -764,7 +764,7 @@ Widget _buildGroup() {
                         controller: _commentController,
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
-                          hintText: "Kommentar eingeben",
+                          hintText: "Type your comment...",
                           hintStyle:
                               const TextStyle(color: Colors.grey),
                           filled: true,
@@ -803,7 +803,7 @@ Widget _buildGroup() {
                           });
                         }
                       },
-                      child: const Text("Senden"),
+                      child: const Text("Send"),
                     ),
                   ],
                 ),
