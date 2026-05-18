@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "602151242105",
+    "project_id": "gotogym-40538",
+    "storage_bucket": "gotogym-40538.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602151242105:android:b0eafcef3da5ad27d887a8",
+        "android_client_info": {
+          "package_name": "com.example.gotogym"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCGMmHRY_wzF6jy9I8BK_Ai8Ssk4F6C5s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
