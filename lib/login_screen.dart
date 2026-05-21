@@ -33,6 +33,12 @@ class _LoginScreenState extends State<LoginScreen> {
           password: passwordController.text.trim(),
         );
       }
+      Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (context) => DashboardScreen(),
+  ),
+);
 
       if (!mounted) return;
 
