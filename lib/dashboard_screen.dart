@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'camera_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'group_detail_screen.dart';
 
 enum TrainingStatus {
   completed,
@@ -127,7 +131,7 @@ await _checkMissedWorkoutDays();
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF111114),
+    backgroundColor: const Color(0xFF111114),   
       body: screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xFF1C1C22),
@@ -154,147 +158,196 @@ await _checkMissedWorkoutDays();
   // ================= HOME =================
 
 Widget _buildGroup() {
-  List<Member> members = [
-    Member(name: "Markus", streak: 7, image: "assets/markus.jpg"),
-    Member(name: "Togi", streak: 3, image: "assets/togi.jpg"),
-    Member(name: "Nasser", streak: 1, image: "assets/nasser.jpg"),
-    Member(name: "You", streak: _currentStreak, image: "assets/profile.jpg"),
-  ];
+  return Scaffold(
+    backgroundColor: const Color(0xFF111114),
 
-  members.sort((a, b) => b.streak.compareTo(a.streak));
-
-  return SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          const Text(
-            "Group",
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-
-          const SizedBox(height: 30),
-
-          const Text(
-            "Ranking",
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const SizedBox(height: 15),
-
-          ...members.asMap().entries.map((entry) {
-            int index = entry.key;
-            Member member = entry.value;
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: _cardDecoration(),
-              child: Row(
-                children: [
-
-                  Text(
-                    "#${index + 1}",
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(width: 15),
-
-                  Expanded(
-                    child: Text(
-                      member.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-
-                  const Icon(
-                    Icons.local_fire_department,
-                    color: Colors.orange,
-                    size: 18,
-                  ),
-
-                  const SizedBox(width: 4),
-
-                  Text(
-                    "${member.streak}",
-                    style: const TextStyle(
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-
-          const SizedBox(height: 30),
-
-          const Text(
-            "Still no proof",
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const SizedBox(height: 15),
-
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: _cardDecoration(),
-            child: Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-
-    if (!_workedOutToday)
-      const Text(
-        "❌ You",
-        style: TextStyle(color: Colors.white),
-      ),
-
-    const SizedBox(height: 8),
-
-    const Text(
-      "❌ Togi",
-      style: TextStyle(color: Colors.white),
+    floatingActionButton: FloatingActionButton(
+      backgroundColor: const Color(0xFF4A00E0),
+      child: const Icon(Icons.add),
+      onPressed: () {
+        _showCreateGroupDialog();
+      },
     ),
-  ],
-),
-          ),
 
-          const Spacer(),
+    body: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
 
-          const Center(
-            child: Text(
-              "Don't finish last today.",
+            const Text(
+              "Groups",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
+              "Your Groups",
               style: TextStyle(
                 color: Colors.grey,
-                fontSize: 13,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
               ),
             ),
+
+            const SizedBox(height: 15),
+
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection("groups")
+                    .snapshots(),
+                builder: (context, snapshot) {
+
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  final groups = snapshot.data!.docs;
+
+                  if (groups.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No groups yet",
+                        style: TextStyle(
+                          color: Colors.grey,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: groups.length,
+                    itemBuilder: (context, index) {
+
+                      final group =
+                          groups[index].data()
+                              as Map<String, dynamic>;
+
+                      return GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GroupDetailScreen(
+          groupName: group["name"],
+        ),
+      ),
+    );
+  },
+
+  child: Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(16),
+    decoration: _cardDecoration(),
+
+    child: Row(
+      children: [
+
+        const Icon(
+          Icons.group,
+          color: Colors.white,
+        ),
+
+        const SizedBox(width: 15),
+
+        Expanded(
+          child: Text(
+            group["name"] ?? "No Name",
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ],
+        ),
+      ],
+    ),
+  ),
+);
+                    },
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Center(
+              child: Text(
+                "Don't finish last today.",
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
 }
+void _showCreateGroupDialog() {
+  final controller = TextEditingController();
 
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: const Color(0xFF1C1C22),
+
+        title: const Text(
+          "Create Group",
+          style: TextStyle(color: Colors.white),
+        ),
+
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: "Group Name",
+            hintStyle: TextStyle(color: Colors.grey),
+          ),
+        ),
+
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text("Cancel"),
+          ),
+
+          ElevatedButton(
+            onPressed: () async {
+              await FirebaseFirestore.instance
+                  .collection("groups")
+                  .add({
+                "name": controller.text.trim(),
+                "createdBy":
+                    FirebaseAuth.instance.currentUser!.uid,
+                "createdAt": Timestamp.now(),
+              });
+
+              if (!context.mounted) return;
+
+              Navigator.pop(context);
+            },
+            child: const Text("Create"),
+          ),
+        ],
+      );
+    },
+  );
+}
   Widget _buildHome() {
     List<Member> members = [
       Member(name: "Markus", streak: 7, image: "assets/members/markus.jpg"),
@@ -368,6 +421,7 @@ Widget _buildGroup() {
 } else {
   status = TrainingStatus.completed;
 }
+
 
               return _memberTile(
                 member.name,
@@ -620,14 +674,29 @@ Widget _buildGroup() {
                             as ImageProvider,
                   ),
                   const SizedBox(width: 20),
-                  const Text(
-                    "Your name",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  FutureBuilder<DocumentSnapshot>(
+  future: FirebaseFirestore.instance
+      .collection("users")
+      .doc(FirebaseAuth.instance.currentUser!.uid)
+      .get(),
+  builder: (context, snapshot) {
+    if (!snapshot.hasData) {
+      return const CircularProgressIndicator();
+    }
+
+    final data =
+        snapshot.data!.data() as Map<String, dynamic>;
+
+    return Text(
+      data["username"] ?? "No Name",
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  },
+),
                 ],
               ),
             ),
@@ -661,10 +730,30 @@ Widget _buildGroup() {
                 );
               }),
             ),
+            const SizedBox(height: 30),
+
+_profileTile(
+  Icons.logout_rounded,
+  "Logout",
+  onTap: () async {
+    await FirebaseAuth.instance.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(),
+      ),
+    );
+  },
+),
           ],
+          
         ),
       ),
     );
+    
   }
 
   Widget _sectionTitle(String title) {
