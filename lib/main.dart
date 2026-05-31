@@ -20,13 +20,9 @@ class GoToGymApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-<<<<<<< HEAD
-      home: LoginScreen(),
-=======
       home: FirebaseAuth.instance.currentUser != null
         ? DashboardScreen()
         : const LoginScreen(),
->>>>>>> b3176111ba000581e81878d2265e6e870b838599
     );
   }
 }

@@ -672,13 +672,17 @@ void _showCreateGroupDialog() {
       .doc(FirebaseAuth.instance.currentUser!.uid)
       .get(),
   builder: (context, snapshot) {
-    if (!snapshot.hasData) {
-      return const CircularProgressIndicator();
-    }
+    if (!snapshot.hasData ||
+    snapshot.data!.data() == null) {
+  return const Text(
+    "No Username",
+    style: TextStyle(color: Colors.white),
+  );
+}
 
-    final data =
-        snapshot.data!.data() as Map<String, dynamic>;
-
+final data =
+    snapshot.data!.data()
+        as Map<String, dynamic>;
     return Text(
       data["username"] ?? "No Name",
       style: const TextStyle(
