@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dashboard_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,6 +13,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final usernameController = TextEditingController();
 
   bool isLogin = true;
   bool loading = false;
@@ -23,16 +25,38 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       if (isLogin) {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-        );
-      } else {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-        );
-      }
+        final userCredential =
+    await FirebaseAuth.instance
+        .signInWithEmailAndPassword(
+  email: emailController.text.trim(),
+  password: passwordController.text.trim(),
+);
+      
+     } else {
+  final userCredential =
+      await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+    email: emailController.text.trim(),
+    password: passwordController.text.trim(),
+  );
+
+  await FirebaseFirestore.instance
+      .collection("users")
+      .doc(userCredential.user!.uid)
+      .set({
+    "username": usernameController.text.trim(),
+    "email": emailController.text.trim(),
+    "streak": 0,
+    "bestStreak": 0,
+    "createdAt": Timestamp.now(),
+  });
+}
+      Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (context) => DashboardScreen(),
+  ),
+);
 
       if (!mounted) return;
 
@@ -77,8 +101,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 40),
 
+if (!isLogin)
+  TextField(
+    controller: usernameController,
+    style: const TextStyle(color: Colors.white),
+    decoration: const InputDecoration(
+      hintText: "Username",
+      hintStyle: TextStyle(color: Colors.grey),
+    ),
+  ),
+
               TextField(
                 controller: emailController,
+                
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   hintText: "E-Mail",

@@ -3,6 +3,7 @@ import 'dashboard_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,9 +18,15 @@ class GoToGymApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
+<<<<<<< HEAD
       home: LoginScreen(),
+=======
+      home: FirebaseAuth.instance.currentUser != null
+        ? DashboardScreen()
+        : const LoginScreen(),
+>>>>>>> b3176111ba000581e81878d2265e6e870b838599
     );
   }
 }
