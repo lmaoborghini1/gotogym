@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 class GroupDetailScreen extends StatelessWidget {
   final String groupName;
+  final String groupId;
 
   const GroupDetailScreen({
     super.key,
     required this.groupName,
+    required this.groupId,
   });
 
   @override

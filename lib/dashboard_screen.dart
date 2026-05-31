@@ -53,8 +53,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _createUserDocumentIfNeeded();
     _loadAll();
   }
+  
+Future<void> _createUserDocumentIfNeeded() async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) return;
+
+  final doc = await FirebaseFirestore.instance
+      .collection("users")
+      .doc(user.uid)
+      .get();
+
+  if (!doc.exists) {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .set({
+      "email": user.email,
+      "username": user.email,
+      "createdAt": Timestamp.now(),
+    });
+  }
+}
 
 Future<void> _checkMissedWorkoutDays() async {
   if (_lastWorkoutDate == null) return;
@@ -161,6 +184,14 @@ Widget _buildGroup() {
   return Scaffold(
     backgroundColor: const Color(0xFF111114),
 
+    floatingActionButton: FloatingActionButton(
+  backgroundColor: const Color(0xFF4A00E0),
+  child: const Icon(Icons.add),
+  onPressed: () {
+    _showCreateGroupDialog();
+  },
+),
+
     body: SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -230,6 +261,7 @@ Widget _buildGroup() {
       context,
       MaterialPageRoute(
         builder: (_) => GroupDetailScreen(
+          groupId: groups[index].id,
           groupName: group["name"],
         ),
       ),
@@ -320,14 +352,24 @@ void _showCreateGroupDialog() {
 
           ElevatedButton(
             onPressed: () async {
-              await FirebaseFirestore.instance
-                  .collection("groups")
-                  .add({
-                "name": controller.text.trim(),
-                "createdBy":
-                    FirebaseAuth.instance.currentUser!.uid,
-                "createdAt": Timestamp.now(),
-              });
+              final groupRef =
+    await FirebaseFirestore.instance
+        .collection("groups")
+        .add({
+  "name": controller.text.trim(),
+  "createdBy":
+      FirebaseAuth.instance.currentUser!.uid,
+  "createdAt": Timestamp.now(),
+});
+
+await FirebaseFirestore.instance
+    .collection("group_members")
+    .add({
+  "groupId": groupRef.id,
+  "userId":
+      FirebaseAuth.instance.currentUser!.uid,
+  "joinedAt": Timestamp.now(),
+});
 
               if (!context.mounted) return;
 
