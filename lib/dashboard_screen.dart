@@ -240,7 +240,7 @@ Widget _buildGroup() {
                 ],
               ),
             );
-          }).toList(),
+          }),
 
           const SizedBox(height: 30),
 
@@ -376,7 +376,7 @@ Widget _buildGroup() {
                 index + 1,
                 member.image,
               );
-            }).toList(),
+            }),
             const SizedBox(height: 30),
             Center(
               child: TextButton(
