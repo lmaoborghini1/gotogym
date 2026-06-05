@@ -284,14 +284,42 @@ Widget _buildGroup() {
         const SizedBox(width: 15),
 
         Expanded(
-          child: Text(
-            group["name"] ?? "No Name",
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        group["name"] ?? "No Name",
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
         ),
+      ),
+
+      const SizedBox(height: 4),
+
+      StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection("group_members")
+            .where("groupId",
+                isEqualTo: groups[index].id)
+            .snapshots(),
+        builder: (context, memberSnapshot) {
+
+          final count =
+              memberSnapshot.data?.docs.length ?? 0;
+
+          return Text(
+            "$count members",
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+),
       ],
     ),
   ),
