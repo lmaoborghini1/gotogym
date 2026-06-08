@@ -41,6 +41,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _lastWorkoutImagePath;
   DateTime? _lastWorkoutDate;
   String? _profileImagePath;
+  String? _selectedGroupId;
+  String? _selectedGroupName;
 
   List<int> _workoutDays = [];
 
@@ -101,6 +103,12 @@ Future<void> _checkMissedWorkoutDays() async {
     _workedOutToday = prefs.getBool('workedOutToday') ?? false;
 
     _profileImagePath = prefs.getString('profileImage');
+
+    _selectedGroupId =
+    prefs.getString('selectedGroupId');
+
+_selectedGroupName =
+    prefs.getString('selectedGroupName');
 
     _currentStreak = prefs.getInt('currentStreak') ?? 0;
 
@@ -222,114 +230,154 @@ Widget _buildGroup() {
             const SizedBox(height: 15),
 
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection("groups")
-                    .snapshots(),
-                builder: (context, snapshot) {
+  child: FutureBuilder<QuerySnapshot>(
+    future: FirebaseFirestore.instance
+        .collection("group_members")
+        .where(
+          "userId",
+          isEqualTo:
+              FirebaseAuth.instance.currentUser!.uid,
+        )
+        .get(),
+    builder: (context, memberSnapshot) {
 
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
+      if (!memberSnapshot.hasData) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      }
 
-                  final groups = snapshot.data!.docs;
+      final memberships =
+          memberSnapshot.data!.docs;
 
-                  if (groups.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        "No groups yet",
-                        style: TextStyle(
-                          color: Colors.grey,
+      if (memberships.isEmpty) {
+        return const Center(
+          child: Text(
+            "No groups yet",
+            style: TextStyle(
+              color: Colors.grey,
+            ),
+          ),
+        );
+      }
+
+      final groupIds = memberships
+          .map(
+            (e) =>
+                (e.data() as Map<String, dynamic>)
+                    ["groupId"] as String,
+          )
+          .toList();
+
+      return StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection("groups")
+            .where(
+              FieldPath.documentId,
+              whereIn: groupIds,
+            )
+            .snapshots(),
+        builder: (context, snapshot) {
+
+          if (!snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final groups =
+              snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: groups.length,
+            itemBuilder: (context, index) {
+
+              final group =
+                  groups[index].data()
+                      as Map<String, dynamic>;
+
+              return GestureDetector(
+                onTap: () async {
+  final prefs =
+      await SharedPreferences.getInstance();
+
+  await prefs.setString(
+    "selectedGroupId",
+    groups[index].id,
+  );
+
+  await prefs.setString(
+    "selectedGroupName",
+    group["name"],
+  );
+
+  if (!context.mounted) return;
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => GroupDetailScreen(
+        groupId: groups[index].id,
+        groupName: group["name"],
+      ),
+    ),
+  );
+},
+
+                child: Container(
+                  margin:
+                      const EdgeInsets.only(
+                    bottom: 12,
+                  ),
+                  padding:
+                      const EdgeInsets.all(16),
+                  decoration:
+                      _cardDecoration(),
+
+                  child: Row(
+                    children: [
+
+                      const Icon(
+                        Icons.group,
+                        color: Colors.white,
+                      ),
+
+                      const SizedBox(
+                        width: 15,
+                      ),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start,
+                          children: [
+                            Text(
+                              group["name"] ??
+                                  "No Name",
+                              style:
+                                  const TextStyle(
+                                color:
+                                    Colors.white,
+                                fontWeight:
+                                    FontWeight
+                                        .w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    itemCount: groups.length,
-                    itemBuilder: (context, index) {
-
-                      final group =
-                          groups[index].data()
-                              as Map<String, dynamic>;
-
-                      return GestureDetector(
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => GroupDetailScreen(
-          groupId: groups[index].id,
-          groupName: group["name"],
-        ),
-      ),
-    );
-  },
-
-  child: Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(16),
-    decoration: _cardDecoration(),
-
-    child: Row(
-      children: [
-
-        const Icon(
-          Icons.group,
-          color: Colors.white,
-        ),
-
-        const SizedBox(width: 15),
-
-        Expanded(
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        group["name"] ?? "No Name",
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-
-      const SizedBox(height: 4),
-
-      StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection("group_members")
-            .where("groupId",
-                isEqualTo: groups[index].id)
-            .snapshots(),
-        builder: (context, memberSnapshot) {
-
-          final count =
-              memberSnapshot.data?.docs.length ?? 0;
-
-          return Text(
-            "$count members",
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 12,
-            ),
+                    ],
+                  ),
+                ),
+              );
+            },
           );
         },
-      ),
-    ],
+      );
+    },
   ),
 ),
-      ],
-    ),
-  ),
-);
-                    },
-                  );
-                },
-              ),
-            ),
-
             const SizedBox(height: 20),
 
             const Center(
@@ -426,14 +474,14 @@ await FirebaseFirestore.instance
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Today",
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            Text(
+  _selectedGroupName ?? "No Group Selected",
+  style: const TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  ),
+),
             const SizedBox(height: 10),
             Row(
               children: [

@@ -75,13 +75,49 @@ void _showInviteDialog() {
               final userId =
                   result.docs.first.id;
 
-              await FirebaseFirestore.instance
-                  .collection("group_members")
-                  .add({
-                "groupId": widget.groupId,
-                "userId": userId,
-                "joinedAt": Timestamp.now(),
-              });
+              final existingMember =
+    await FirebaseFirestore.instance
+        .collection("group_members")
+        .where("groupId",
+            isEqualTo: widget.groupId)
+        .where("userId",
+            isEqualTo: userId)
+        .get();
+
+if (existingMember.docs.isNotEmpty) {
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context)
+      .showSnackBar(
+    const SnackBar(
+      content: Text(
+        "User is already in the group",
+      ),
+    ),
+  );
+
+  return;
+}
+
+await FirebaseFirestore.instance
+    .collection("group_members")
+    .add({
+  "groupId": widget.groupId,
+  "userId": userId,
+  "joinedAt": Timestamp.now(),
+});
+
+if (!context.mounted) return;
+
+Navigator.pop(context);
+
+ScaffoldMessenger.of(context).showSnackBar(
+  const SnackBar(
+    content: Text(
+      "Member invited successfully",
+    ),
+  ),
+);
 
               if (!context.mounted) return;
 
