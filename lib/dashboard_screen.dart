@@ -128,6 +128,45 @@ _selectedGroupName =
 
 await _checkMissedWorkoutDays();
 
+Future<void> _checkWorkoutStatus() async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) return;
+
+  final doc = await FirebaseFirestore.instance
+      .collection("users")
+      .doc(user.uid)
+      .get();
+
+  if (!doc.exists) return;
+
+  final data =
+      doc.data() as Map<String, dynamic>;
+
+  if (data["lastWorkoutDate"] == null) return;
+
+  final lastWorkout =
+      (data["lastWorkoutDate"] as Timestamp)
+          .toDate();
+
+  final now = DateTime.now();
+
+  final sameDay =
+      lastWorkout.year == now.year &&
+      lastWorkout.month == now.month &&
+      lastWorkout.day == now.day;
+
+  if (!sameDay) {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .update({
+      "workedOutToday": false,
+    });
+  }
+}
+
+await _checkWorkoutStatus();
     setState(() {});
   }
 
@@ -311,6 +350,11 @@ Widget _buildGroup() {
     group["name"],
   );
 
+  setState(() {
+    _selectedGroupId = groups[index].id;
+    _selectedGroupName = group["name"];
+  });
+
   if (!context.mounted) return;
 
   Navigator.push(
@@ -459,14 +503,7 @@ await FirebaseFirestore.instance
   );
 }
   Widget _buildHome() {
-    List<Member> members = [
-      Member(name: "Markus", streak: 7, image: "assets/members/markus.jpg"),
-    Member(name: "Togi", streak: 3, image: "assets/members/togi.jpg"),
-    Member(name: "Nasser", streak: 1, image: "assets/members/nasser.jpg"),
-    Member(name: "You", streak: _currentStreak, image: "assets/members/profile.jpg"),
-    ];
-
-    members.sort((a, b) => b.streak.compareTo(a.streak));
+    List<Member> members = [];
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -514,33 +551,158 @@ await FirebaseFirestore.instance
               ),
             ),
             const SizedBox(height: 15),
-            ...members.asMap().entries.map((entry) {
-              int index = entry.key;
-              Member member = entry.value;
+            if (_selectedGroupId != null)
+  SizedBox(
+    height: 150,
+    child: StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("group_members")
+          .where(
+            "groupId",
+            isEqualTo: _selectedGroupId,
+          )
+          .snapshots(),
+      builder: (context, snapshot) {
 
-              TrainingStatus status;
+        if (!snapshot.hasData) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
 
-              if (member.name == "Du") {
-  status = _workedOutToday
-      ? TrainingStatus.completed
-      : TrainingStatus.dueToday;
-} else if (member.name == "Nasser") {
-  status = TrainingStatus.upcoming;
-} else if (member.name == "Togi") {
-  status = TrainingStatus.dueToday;
-} else {
-  status = TrainingStatus.completed;
-}
+        final members = snapshot.data!.docs;
 
+members.sort((a, b) {
+  final aData =
+      a.data() as Map<String, dynamic>;
 
-              return _memberTile(
-                member.name,
-                status,
-                member.streak,
-                index + 1,
-                member.image,
+  final bData =
+      b.data() as Map<String, dynamic>;
+
+  return 0;
+});
+
+        return ListView.builder(
+          itemCount: members.length,
+          itemBuilder: (context, index) {
+
+            final member =
+                members[index].data()
+                    as Map<String, dynamic>;
+
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection("users")
+                  .doc(member["userId"])
+                  .get(),
+              builder: (context, userSnapshot) {
+
+                if (!userSnapshot.hasData ||
+                    userSnapshot.data!.data() == null) {
+                  return const SizedBox();
+                }
+
+                final userData =
+                    userSnapshot.data!.data()
+                        as Map<String, dynamic>;
+
+                final status =
+    userData["workedOutToday"] == true
+        ? TrainingStatus.completed
+        : TrainingStatus.dueToday;
+
+return _memberTile(
+  userData["username"] ?? "Unknown",
+  status,
+  userData["streak"] ?? 0,
+  index + 1,
+  "assets/profile.jpg",
+);
+              },
+            );
+          },
+        );
+      },
+    ),
+  ),
+const SizedBox(height: 30),
+
+const SizedBox(height: 30),
+
+const Text(
+  "Still no proof",
+  style: TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  ),
+),
+
+const SizedBox(height: 15),
+
+if (_selectedGroupId != null)
+  StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection("group_members")
+        .where(
+          "groupId",
+          isEqualTo: _selectedGroupId,
+        )
+        .snapshots(),
+    builder: (context, snapshot) {
+
+      if (!snapshot.hasData) {
+        return const SizedBox();
+      }
+
+      final members = snapshot.data!.docs;
+
+      return Column(
+        children: members.map((memberDoc) {
+
+          final member =
+              memberDoc.data()
+                  as Map<String, dynamic>;
+
+          return FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection("users")
+                .doc(member["userId"])
+                .get(),
+            builder: (context, userSnapshot) {
+
+              if (!userSnapshot.hasData ||
+                  userSnapshot.data!.data() == null) {
+                return const SizedBox();
+              }
+
+              final userData =
+                  userSnapshot.data!.data()
+                      as Map<String, dynamic>;
+
+              
+
+              return Card(
+                color: const Color(0xFF1C1C22),
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.close,
+                    color: Colors.red,
+                  ),
+                  title: Text(
+                    userData["username"] ?? "Unknown",
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               );
-            }),
+            },
+          );
+        }).toList(),
+      );
+    },
+  ),
             const SizedBox(height: 30),
             Center(
               child: TextButton(
@@ -622,6 +784,31 @@ await FirebaseFirestore.instance
 
               await prefs.setInt('currentStreak', _currentStreak);
               await prefs.setInt('bestStreak', _bestStreak);
+
+             await FirebaseFirestore.instance
+    .collection("users")
+    .doc(FirebaseAuth.instance.currentUser!.uid)
+    .update({
+  "streak": _currentStreak,
+  "bestStreak": _bestStreak,
+  "workedOutToday": true,
+  "lastWorkoutDate": Timestamp.now(),
+});
+
+final selectedGroupId =
+    prefs.getString("selectedGroupId");
+
+if (selectedGroupId != null) {
+  await FirebaseFirestore.instance
+      .collection("group_posts")
+      .add({
+    "groupId": selectedGroupId,
+    "userId":
+        FirebaseAuth.instance.currentUser!.uid,
+    "createdAt": Timestamp.now(),
+  });
+}
+
               await prefs.setString('lastWorkoutDate', now.toIso8601String());
               await prefs.setBool('workedOutToday', true);
 
