@@ -162,6 +162,81 @@ Future<void> _loadOwner() async {
       _showInviteDialog();
     },
   ),
+  if (ownerId ==
+    FirebaseAuth.instance.currentUser?.uid)
+  IconButton(
+    icon: const Icon(
+      Icons.delete,
+      color: Colors.red,
+    ),
+    onPressed: () async {
+
+      final confirm =
+          await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text(
+              "Delete Group",
+            ),
+            content: const Text(
+              "This action cannot be undone.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(
+                    context,
+                    false,
+                  );
+                },
+                child: const Text(
+                  "Cancel",
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(
+                    context,
+                    true,
+                  );
+                },
+                child: const Text(
+                  "Delete",
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirm != true) {
+        return;
+      }
+
+      final members =
+          await FirebaseFirestore.instance
+              .collection("group_members")
+              .where(
+                "groupId",
+                isEqualTo: widget.groupId,
+              )
+              .get();
+
+      for (final doc in members.docs) {
+        await doc.reference.delete();
+      }
+
+      await FirebaseFirestore.instance
+          .collection("groups")
+          .doc(widget.groupId)
+          .delete();
+
+      if (!context.mounted) return;
+
+      Navigator.pop(context);
+    },
+  ),
 ],
 ),
 
@@ -238,6 +313,7 @@ Future<void> _loadOwner() async {
       : Colors.white,
 ),
               title: FutureBuilder<DocumentSnapshot>(
+                
   future: FirebaseFirestore.instance
       .collection("users")
       .doc(member["userId"])
@@ -264,6 +340,7 @@ Future<void> _loadOwner() async {
     );
   },
 ),
+
             ),
           );
         },

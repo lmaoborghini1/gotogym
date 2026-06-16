@@ -4,6 +4,7 @@ import 'camera_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'group_detail_screen.dart';
@@ -615,7 +616,7 @@ return _memberTile(
   userData["username"] ?? "Unknown",
   status,
   userData["streak"] ?? 0,
-  index + 1,
+  0,
   "assets/profile.jpg",
 );
               },
@@ -680,7 +681,9 @@ if (_selectedGroupId != null)
                   userSnapshot.data!.data()
                       as Map<String, dynamic>;
 
-              
+              if (userData["workedOutToday"] == true) {
+  return const SizedBox();
+}
 
               return Card(
                 color: const Color(0xFF1C1C22),
@@ -765,6 +768,18 @@ if (_selectedGroupId != null)
             if (imagePath != null) {
               final now = DateTime.now();
               final prefs = await SharedPreferences.getInstance();
+              final file = File(imagePath);
+
+final storageRef = FirebaseStorage.instance
+    .ref()
+    .child(
+      "proofs/${FirebaseAuth.instance.currentUser!.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg",
+    );
+
+await storageRef.putFile(file);
+
+final imageUrl =
+    await storageRef.getDownloadURL();
 
               if (_lastWorkoutDate != null) {
                 final difference = now.difference(_lastWorkoutDate!).inDays;
@@ -805,6 +820,7 @@ if (selectedGroupId != null) {
     "groupId": selectedGroupId,
     "userId":
         FirebaseAuth.instance.currentUser!.uid,
+    "imageUrl": imageUrl,
     "createdAt": Timestamp.now(),
   });
 }
@@ -871,14 +887,14 @@ if (selectedGroupId != null) {
       decoration: _cardDecoration(),
       child: Row(
         children: [
-          Text(
-            "#$rank",
-            style: const TextStyle(
-              color: Colors.grey,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 10),
+          if (rank > 0)
+  Text(
+    "#$rank",
+    style: const TextStyle(
+      color: Colors.grey,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
 
           CircleAvatar(
             radius: 22,
