@@ -707,6 +707,108 @@ if (_selectedGroupId != null)
     },
   ),
             const SizedBox(height: 30),
+            
+            const SizedBox(height: 30),
+
+const Text(
+  "Latest Proofs",
+  style: TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  ),
+),
+
+const SizedBox(height: 15),
+
+if (_selectedGroupId != null)
+  SizedBox(
+    height: 350,
+    child: StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("group_posts")
+          .where(
+            "groupId",
+            isEqualTo: _selectedGroupId,
+          )
+          .snapshots(),
+      builder: (context, snapshot) {
+
+        if (!snapshot.hasData) {
+          return const SizedBox();
+        }
+
+        final posts = snapshot.data!.docs;
+
+        debugPrint("POST COUNT: ${posts.length}");
+
+        return ListView.builder(
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
+
+            final post =
+                posts[index].data()
+                    as Map<String, dynamic>;
+
+            final postId = posts[index].id;
+
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection("users")
+                  .doc(post["userId"])
+                  .get(),
+              builder: (context, userSnapshot) {
+
+                if (!userSnapshot.hasData ||
+                    userSnapshot.data?.data() == null) {
+                  return const SizedBox();
+                }
+
+                final userData =
+                    userSnapshot.data!.data()
+                        as Map<String, dynamic>;
+
+ final createdAt =
+    (post["createdAt"] as Timestamp)
+        .toDate();
+
+final time =
+    "${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}";
+
+return GestureDetector(
+  onTap: () {
+    _openProofComments(postId);
+  },
+  child: Card(
+    color: const Color(0xFF1C1C22),
+    child: ListTile(
+      leading: const Icon(
+        Icons.local_fire_department,
+        color: Colors.orange,
+      ),
+      title: Text(
+        "🔥 ${userData["username"]} posted proof",
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        time,
+        style: const TextStyle(
+          color: Colors.grey,
+        ),
+      ),
+    ),
+  ),
+);
+              },
+            );
+          },
+        );
+      },
+    ),
+  ),
             Center(
               child: TextButton(
                 onPressed: () => _openComments(context),
@@ -776,10 +878,21 @@ final storageRef = FirebaseStorage.instance
       "proofs/${FirebaseAuth.instance.currentUser!.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg",
     );
 
-await storageRef.putFile(file);
+String imageUrl = "";
 
-final imageUrl =
-    await storageRef.getDownloadURL();
+try {
+  await storageRef.putFile(file);
+
+  imageUrl =
+      await storageRef.getDownloadURL();
+
+  debugPrint("IMAGE URL:");
+  debugPrint(imageUrl);
+
+} catch (e) {
+  debugPrint("STORAGE ERROR:");
+  debugPrint(e.toString());
+}
 
               if (_lastWorkoutDate != null) {
                 final difference = now.difference(_lastWorkoutDate!).inDays;
@@ -1220,6 +1333,178 @@ _profileTile(
       },
     );
   }
+
+void _openProofComments(String postId) {
+  final controller =
+      TextEditingController();
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: const Color(
+      0xFF1C1C22,
+    ),
+    builder: (context) {
+      return SizedBox(
+        height:
+            MediaQuery.of(context)
+                    .size
+                    .height *
+                0.8,
+        child: Column(
+          children: [
+
+            const SizedBox(height: 20),
+
+            const Text(
+              "Comments",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+              ),
+            ),
+
+            Expanded(
+              child:
+                  StreamBuilder<QuerySnapshot>(
+                stream:
+                    FirebaseFirestore
+                        .instance
+                        .collection(
+                            "post_comments")
+                        .where(
+                          "postId",
+                          isEqualTo: postId,
+                        )
+                        .snapshots(),
+                builder:
+                    (context, snapshot) {
+
+                  if (!snapshot.hasData) {
+                    return const SizedBox();
+                  }
+
+                  final comments =
+                      snapshot.data!.docs;
+
+                  return ListView.builder(
+                    itemCount:
+                        comments.length,
+                    itemBuilder:
+                        (context, index) {
+
+                      final comment =
+                          comments[index]
+                                  .data()
+                              as Map<
+                                  String,
+                                  dynamic>;
+
+                      return FutureBuilder<DocumentSnapshot>(
+  future: FirebaseFirestore.instance
+      .collection("users")
+      .doc(comment["userId"])
+      .get(),
+  builder: (context, userSnapshot) {
+
+    if (!userSnapshot.hasData ||
+        userSnapshot.data?.data() == null) {
+      return const SizedBox();
+    }
+
+    final userData =
+        userSnapshot.data!.data()
+            as Map<String, dynamic>;
+
+    return ListTile(
+      title: Text(
+        userData["username"] ?? "Unknown",
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      subtitle: Text(
+        comment["text"],
+        style: const TextStyle(
+          color: Colors.white70,
+        ),
+      ),
+    );
+  },
+);
+                    },
+                  );
+                },
+              ),
+            ),
+
+            Padding(
+              padding:
+                  const EdgeInsets.all(
+                16,
+              ),
+              child: Row(
+                children: [
+
+                  Expanded(
+                    child: TextField(
+                      controller:
+                          controller,
+                      style:
+                          const TextStyle(
+                        color:
+                            Colors.white,
+                      ),
+                    ),
+                  ),
+
+                  IconButton(
+                    icon: const Icon(
+                      Icons.send,
+                      color:
+                          Colors.white,
+                    ),
+                    onPressed:
+                        () async {
+
+                      if (controller.text
+                          .trim()
+                          .isEmpty) {
+                        return;
+                      }
+
+                      await FirebaseFirestore
+                          .instance
+                          .collection(
+                              "post_comments")
+                          .add({
+                        "postId":
+                            postId,
+                        "userId":
+                            FirebaseAuth
+                                .instance
+                                .currentUser!
+                                .uid,
+                        "text":
+                            controller.text
+                                .trim(),
+                        "createdAt":
+                            Timestamp.now(),
+                      });
+
+                      controller.clear();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
