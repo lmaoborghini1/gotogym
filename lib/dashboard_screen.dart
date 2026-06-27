@@ -750,6 +750,11 @@ if (_selectedGroupId != null)
                 posts[index].data()
                     as Map<String, dynamic>;
 
+final imageUrl = post["imageUrl"] ?? "";
+
+debugPrint("IMAGE:");
+debugPrint(imageUrl);
+
             final postId = posts[index].id;
 
             return FutureBuilder<DocumentSnapshot>(
@@ -775,31 +780,46 @@ if (_selectedGroupId != null)
 final time =
     "${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}";
 
-return GestureDetector(
-  onTap: () {
-    _openProofComments(postId);
-  },
-  child: Card(
-    color: const Color(0xFF1C1C22),
-    child: ListTile(
-      leading: const Icon(
-        Icons.local_fire_department,
-        color: Colors.orange,
-      ),
-      title: Text(
-        "🔥 ${userData["username"]} posted proof",
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
+return Card(
+  color: const Color(0xFF1C1C22),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+
+      ListTile(
+        leading: const Icon(
+          Icons.local_fire_department,
+          color: Colors.orange,
+        ),
+        title: Text(
+          "🔥 ${userData["username"]} posted proof",
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        subtitle: Text(
+          time,
+          style: const TextStyle(
+            color: Colors.grey,
+          ),
         ),
       ),
-      subtitle: Text(
-        time,
-        style: const TextStyle(
-          color: Colors.grey,
+
+      if (imageUrl.isNotEmpty)
+        ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(12),
+            bottomRight: Radius.circular(12),
+          ),
+          child: Image.network(
+            imageUrl,
+            width: double.infinity,
+            height: 220,
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-    ),
+    ],
   ),
 );
               },

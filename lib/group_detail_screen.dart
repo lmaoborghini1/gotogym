@@ -162,6 +162,40 @@ Future<void> _loadOwner() async {
       _showInviteDialog();
     },
   ),
+
+IconButton(
+  icon: const Icon(
+    Icons.exit_to_app,
+    color: Colors.orange,
+  ),
+  onPressed: () async {
+
+    final currentUser =
+        FirebaseAuth.instance.currentUser!.uid;
+
+    final membership =
+        await FirebaseFirestore.instance
+            .collection("group_members")
+            .where(
+              "groupId",
+              isEqualTo: widget.groupId,
+            )
+            .where(
+              "userId",
+              isEqualTo: currentUser,
+            )
+            .get();
+
+    for (final doc in membership.docs) {
+      await doc.reference.delete();
+    }
+
+    if (!context.mounted) return;
+
+    Navigator.pop(context);
+  },
+),
+
   if (ownerId ==
     FirebaseAuth.instance.currentUser?.uid)
   IconButton(
@@ -332,6 +366,9 @@ Future<void> _loadOwner() async {
         userSnapshot.data!.data()
             as Map<String, dynamic>;
 
+    final username =
+    userData["username"] ?? "Unknown";
+
     return Text(
       userData["username"] ?? "Unknown",
       style: const TextStyle(
@@ -340,7 +377,52 @@ Future<void> _loadOwner() async {
     );
   },
 ),
+trailing: member["userId"] != ownerId
+    ? (ownerId ==
+            FirebaseAuth.instance.currentUser!.uid
+        ? IconButton(
+            icon: const Icon(
+              Icons.remove_circle,
+              color: Colors.red,
+            ),
+            onPressed: () async {
 
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Remove Member"),
+        content: const Text(
+          "Do you really want to remove this member?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+            },
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+            child: const Text(
+              "Remove",
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirm != true) return;
+
+  await members[index].reference.delete();
+},
+          )
+        : null)
+    : null,
             ),
           );
         },
